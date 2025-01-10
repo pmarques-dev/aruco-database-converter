@@ -9,22 +9,23 @@ struct db_t {
 	const uint8_t *base;
 	const char *name;
 	int bytes;
+	int bits;
 	int size, check;
 };
 
 #define array_count(a)			((int)(sizeof(a) / (sizeof(a[0]))))
 
 static db_t databases[10] = {
-	{ DICT_ARUCO_BYTES[0][0],		"ARUCO_DB_ORIGINAL",		4,	1024,	array_count(DICT_ARUCO_BYTES)		},
-	{ DICT_4X4_1000_BYTES[0][0],		"ARUCO_DB_4X4_1000",		2,	1000,	array_count(DICT_4X4_1000_BYTES)	},
-	{ DICT_5X5_1000_BYTES[0][0],		"ARUCO_DB_5X5_1000",		4,	1000,	array_count(DICT_5X5_1000_BYTES)	},
-	{ DICT_6X6_1000_BYTES[0][0],		"ARUCO_DB_6X6_1000",		5,	1000,	array_count(DICT_6X6_1000_BYTES)	},
-	{ DICT_7X7_1000_BYTES[0][0],		"ARUCO_DB_7X7_1000",		7,	1000,	array_count(DICT_7X7_1000_BYTES)	},
-	{ DICT_ARUCO_MIP_36h12_BYTES[0][0],	"ARUCO_DB_ARUCO_MIP_36h12",	5,	250,	array_count(DICT_ARUCO_MIP_36h12_BYTES)	},
-	{ DICT_APRILTAG_16h5_BYTES[0][0],	"ARUCO_DB_APRILTAG_16h5",	2,	30,	array_count(DICT_APRILTAG_16h5_BYTES)	},
-	{ DICT_APRILTAG_25h9_BYTES[0][0],	"ARUCO_DB_APRILTAG_25h9",	4,	35,	array_count(DICT_APRILTAG_25h9_BYTES)	},
-	{ DICT_APRILTAG_36h10_BYTES[0][0],	"ARUCO_DB_APRILTAG_36h10",	5,	2320,	array_count(DICT_APRILTAG_36h10_BYTES)	},
-	{ DICT_APRILTAG_36h11_BYTES[0][0],	"ARUCO_DB_APRILTAG_36h11",	5,	587,	array_count(DICT_APRILTAG_36h11_BYTES)	},
+	{ DICT_ARUCO_BYTES[0][0],		"ARUCO_DB_ORIGINAL",		4, 5,	1024,	array_count(DICT_ARUCO_BYTES)		},
+	{ DICT_4X4_1000_BYTES[0][0],		"ARUCO_DB_4X4_1000",		2, 4,	1000,	array_count(DICT_4X4_1000_BYTES)	},
+	{ DICT_5X5_1000_BYTES[0][0],		"ARUCO_DB_5X5_1000",		4, 5,	1000,	array_count(DICT_5X5_1000_BYTES)	},
+	{ DICT_6X6_1000_BYTES[0][0],		"ARUCO_DB_6X6_1000",		5, 6,	1000,	array_count(DICT_6X6_1000_BYTES)	},
+	{ DICT_7X7_1000_BYTES[0][0],		"ARUCO_DB_7X7_1000",		7, 7,	1000,	array_count(DICT_7X7_1000_BYTES)	},
+	{ DICT_ARUCO_MIP_36h12_BYTES[0][0],	"ARUCO_DB_ARUCO_MIP_36h12",	5, 6,	250,	array_count(DICT_ARUCO_MIP_36h12_BYTES)	},
+	{ DICT_APRILTAG_16h5_BYTES[0][0],	"ARUCO_DB_APRILTAG_16h5",	2, 4,	30,	array_count(DICT_APRILTAG_16h5_BYTES)	},
+	{ DICT_APRILTAG_25h9_BYTES[0][0],	"ARUCO_DB_APRILTAG_25h9",	4, 5,	35,	array_count(DICT_APRILTAG_25h9_BYTES)	},
+	{ DICT_APRILTAG_36h10_BYTES[0][0],	"ARUCO_DB_APRILTAG_36h10",	5, 6,	2320,	array_count(DICT_APRILTAG_36h10_BYTES)	},
+	{ DICT_APRILTAG_36h11_BYTES[0][0],	"ARUCO_DB_APRILTAG_36h11",	5, 6,	587,	array_count(DICT_APRILTAG_36h11_BYTES)	},
 };
 
 
@@ -41,6 +42,8 @@ static void export_db(db_t &db)
 	printf("#ifndef ARUCO_DB_SIZE\n");
 	printf("#define ARUCO_DB_SIZE %d\n", db.size);
 	printf("#endif\n\n");
+
+	printf("#define ARUCO_BITS	%d\n\n", db.bits);
 
 	printf("static unsigned char database[ARUCO_DB_SIZE][4][%d] = {\n", db.bytes);
 

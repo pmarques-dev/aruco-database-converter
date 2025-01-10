@@ -1,4 +1,5 @@
-// This file is part of OpenCV project.
+// This file is based on code from the OpenCV project, converted using the 
+// code in https://github.com/pmarques-dev/aruco-database-converter.
 // It is subject to the license terms in the LICENSE file found on this folder
 // and at http://opencv.org/license.html.
 
@@ -15,13 +16,15 @@
 
 #if !defined(ARUCO_DB)
 
-#error you need to select an aruco database by defining ARUCO_DB to be one of: ARUCO_DB_ORIGINAL ARUCO_DB_4X4_1000 ARUCO_DB_5X5_1000 ARUCO_DB_6X6_1000 ARUCO_DB_7X7_1000 ARUCO_DB_ARUCO_MIP_36h12 ARUCO_DB_APRILTAG_16h5 ARUCO_DB_APRILTAG_25h9 ARUCO_DB_APRILTAG_36h10 ARUCO_DB_APRILTAG_36h11
+#error you need to select one aruco database by defining ARUCO_DB to be one of: ARUCO_DB_ORIGINAL ARUCO_DB_4X4_1000 ARUCO_DB_5X5_1000 ARUCO_DB_6X6_1000 ARUCO_DB_7X7_1000 ARUCO_DB_ARUCO_MIP_36h12 ARUCO_DB_APRILTAG_16h5 ARUCO_DB_APRILTAG_25h9 ARUCO_DB_APRILTAG_36h10 ARUCO_DB_APRILTAG_36h11
 
 #elif (ARUCO_DB == ARUCO_DB_ORIGINAL)
 
 #ifndef ARUCO_DB_SIZE
 #define ARUCO_DB_SIZE 1024
 #endif
+
+#define ARUCO_BITS	5
 
 static unsigned char database[ARUCO_DB_SIZE][4][4] = {
 	#if (ARUCO_DB_SIZE > 0)
@@ -3108,6 +3111,8 @@ static unsigned char database[ARUCO_DB_SIZE][4][4] = {
 #define ARUCO_DB_SIZE 1000
 #endif
 
+#define ARUCO_BITS	4
+
 static unsigned char database[ARUCO_DB_SIZE][4][2] = {
 	#if (ARUCO_DB_SIZE > 0)
 		{ { 181,50 }, { 235,72 }, { 76,173 }, { 18,215 }, },
@@ -6120,6 +6125,8 @@ static unsigned char database[ARUCO_DB_SIZE][4][2] = {
 #ifndef ARUCO_DB_SIZE
 #define ARUCO_DB_SIZE 1000
 #endif
+
+#define ARUCO_BITS	5
 
 static unsigned char database[ARUCO_DB_SIZE][4][4] = {
 	#if (ARUCO_DB_SIZE > 0)
@@ -9134,6 +9141,8 @@ static unsigned char database[ARUCO_DB_SIZE][4][4] = {
 #define ARUCO_DB_SIZE 1000
 #endif
 
+#define ARUCO_BITS	6
+
 static unsigned char database[ARUCO_DB_SIZE][4][5] = {
 	#if (ARUCO_DB_SIZE > 0)
 		{ { 30,61,216,42,6 }, { 227,186,70,49,9 }, { 101,65,187,199,8 }, { 152,198,37,220,7 }, },
@@ -12146,6 +12155,8 @@ static unsigned char database[ARUCO_DB_SIZE][4][5] = {
 #ifndef ARUCO_DB_SIZE
 #define ARUCO_DB_SIZE 1000
 #endif
+
+#define ARUCO_BITS	7
 
 static unsigned char database[ARUCO_DB_SIZE][4][7] = {
 	#if (ARUCO_DB_SIZE > 0)
@@ -15160,6 +15171,8 @@ static unsigned char database[ARUCO_DB_SIZE][4][7] = {
 #define ARUCO_DB_SIZE 250
 #endif
 
+#define ARUCO_BITS	6
+
 static unsigned char database[ARUCO_DB_SIZE][4][5] = {
 	#if (ARUCO_DB_SIZE > 0)
 		{ { 210,182,58,9,13 }, { 69,104,93,183,4 }, { 185,5,198,212,11 }, { 46,219,161,106,2 }, },
@@ -15923,6 +15936,8 @@ static unsigned char database[ARUCO_DB_SIZE][4][5] = {
 #define ARUCO_DB_SIZE 30
 #endif
 
+#define ARUCO_BITS	4
+
 static unsigned char database[ARUCO_DB_SIZE][4][2] = {
 	#if (ARUCO_DB_SIZE > 0)
 		{ { 216,196 }, { 128,190 }, { 35,27 }, { 125,1 }, },
@@ -16025,6 +16040,8 @@ static unsigned char database[ARUCO_DB_SIZE][4][2] = {
 #ifndef ARUCO_DB_SIZE
 #define ARUCO_DB_SIZE 35
 #endif
+
+#define ARUCO_BITS	5
 
 static unsigned char database[ARUCO_DB_SIZE][4][4] = {
 	#if (ARUCO_DB_SIZE > 0)
@@ -16143,6 +16160,8 @@ static unsigned char database[ARUCO_DB_SIZE][4][4] = {
 #ifndef ARUCO_DB_SIZE
 #define ARUCO_DB_SIZE 2320
 #endif
+
+#define ARUCO_BITS	6
 
 static unsigned char database[ARUCO_DB_SIZE][4][5] = {
 	#if (ARUCO_DB_SIZE > 0)
@@ -23117,6 +23136,8 @@ static unsigned char database[ARUCO_DB_SIZE][4][5] = {
 #define ARUCO_DB_SIZE 587
 #endif
 
+#define ARUCO_BITS	6
+
 static unsigned char database[ARUCO_DB_SIZE][4][5] = {
 	#if (ARUCO_DB_SIZE > 0)
 		{ { 33,161,70,186,11 }, { 37,115,179,64,3 }, { 213,214,40,88,4 }, { 192,44,220,234,4 }, },
@@ -24886,6 +24907,7 @@ static unsigned char database[ARUCO_DB_SIZE][4][5] = {
 };
 
 #endif
+
 #undef ARUCO_DB_ORIGINAL
 #undef ARUCO_DB_4X4_1000
 #undef ARUCO_DB_5X5_1000
