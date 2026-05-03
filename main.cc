@@ -80,7 +80,7 @@ int main(void)
 	);
 
 	for (db = 0; db < 10; db++)
-		printf("#define %s	%d\n", databases[db].name, db);
+		printf("#define %s	%d\n", databases[db].name, db + 1);
 	printf("\n");
 
 	printf("#if !defined(ARUCO_DB)\n\n");
@@ -94,7 +94,10 @@ int main(void)
 		//printf("\n#elif (ARUCO_DB == %d)\n\n", db);
 		export_db(databases[db]);
 	}
-	printf("\n#endif\n\n");
+
+	printf("\n#else\n\n"
+		"#error ARUCO_DB is defined to an invalid value\n\n"
+		"#endif\n\n");
 
 	for (db = 0; db < 10; db++)
 		printf("#undef %s\n", databases[db].name);
