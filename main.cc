@@ -1,10 +1,15 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <vector>
 
 #include "predefined_dictionaries.hpp"
 #include "predefined_dictionaries_apriltag.hpp"
 
+
+// -----------------------------------------------------------------------------
+//     aruco database handling
 struct db_t {
 	const uint8_t *base;
 	const char *name;
@@ -69,7 +74,7 @@ static void export_db(db_t &db)
 }
 
 
-int main(void)
+static void export_database(void)
 {
 	int db;
 
@@ -81,6 +86,7 @@ int main(void)
 
 	for (db = 0; db < 10; db++)
 		printf("#define %s	%d\n", databases[db].name, db + 1);
+	printf("#define ARUCO_6x6_CODE32	99\n");
 	printf("\n");
 
 	printf("#if !defined(ARUCO_DB)\n\n");
@@ -95,6 +101,13 @@ int main(void)
 		export_db(databases[db]);
 	}
 
+	printf("\n#elif (ARUCO_DB == ARUCO_6x6_CODE32)\n\n", databases[db].name);
+
+	printf("#define ARUCO_DB_SIZE	0\n\n");
+	printf("#define ARUCO_BITS	6\n\n");
+	printf("static unsigned char database[0][4][4];\n\n");
+	printf("#define ARUCO_CODE32\n\n");
+
 	printf("\n#else\n\n"
 		"#error ARUCO_DB is defined to an invalid value\n\n"
 		"#endif\n\n");
@@ -102,6 +115,169 @@ int main(void)
 	for (db = 0; db < 10; db++)
 		printf("#undef %s\n", databases[db].name);
 	printf("\n");
+}
+
+// -----------------------------------------------------------------------------
+//     Aruco6x6_Code32 image generation code
+
+// this code takes an SVG file with one aruco per line with the following format:
+//    centerX centerY width code
+// all dimensions are in mm. The first line contains the document width and
+// height. An example file is something like:
+//    110.0 60.0
+//    30.0 30.0 40.0 0x12345678
+//    80.0 30.0 40.0 0x90abcdef
+// coordinates are in SVG space, so 0,0 is the lower left corner
+
+struct aruco_gen_t {
+	double x, y, size;
+	uint32_t code;
+
+	double bit_size(int bits) {
+		return size * (bits * (1.0 / 8));
+	}
+
+	double bit_x(int bit) {
+		return x + size * (bit * (1.0 / 8) - 0.5);
+	}
+	double bit_y(int bit) {
+		return y + size * (bit * (1.0 / 8) - 0.5);
+	}
+};
+
+static void output_aruco(FILE *out, aruco_gen_t &g)
+{
+	// output the black background square
+	fprintf(out, "<rect width=\"%g\" height=\"%g\" x=\"%g\" y=\"%g\" fill=\"black\"></rect>",
+		g.size, g.size, g.bit_x(0), g.bit_y(0));
+
+	// output the white bits
+	uint8_t bits[6][6];
+	memset(bits, 0, sizeof(bits));
+
+	// mark the top left corner in white
+	bits[0][0] = 1;
+
+	uint32_t bit = 0x80000000;
+	for (int i = 0; i < 6; i++) {
+		for (int j = 0; j < 6; j++) {
+			// ignore corners
+			if ((i == 0 || i == 5) && (j == 0 || j == 5))
+				continue;
+
+			bits[i][j] = ((g.code & bit) != 0);
+			bit >>= 1;
+		}
+	}
+
+	// print the white bits. Print horizontal and vertical bars to make sure
+	// the SVG renderer won't produce black lines between bits
+	for (int i = 0; i < 6; i++) {
+		for (int j = 0; j < 6; j++) {
+			if (bits[i][j] == 0)
+				continue;
+
+			int l = 0;
+			while (j < 6 && bits[i][j])
+				j++, l++;
+
+			// we don't need to "print" horizontal blocks of size 1
+			// if in the other direction we are going to have bigger
+			// blocks
+			if (l == 1 && ((i > 0 && bits[i-1][j-1]) || (i < 5 && bits[i+1][j-1])))
+				continue;
+
+			fprintf(out, "<rect width=\"%g\" height=\"%g\" x=\"%g\" y=\"%g\" fill=\"white\"></rect>",
+				g.bit_size(l), g.bit_size(1), g.bit_x(j - l + 1), g.bit_y(i + 1));
+		}
+
+		for (int j = 0; j < 6; j++) {
+			if (bits[j][i] == 0)
+				continue;
+
+			int l = 0;
+			while (j < 6 && bits[j][i])
+				j++, l++;
+
+			if (l != 1)
+				fprintf(out, "<rect width=\"%g\" height=\"%g\" x=\"%g\" y=\"%g\" fill=\"white\"></rect>",
+					g.bit_size(1), g.bit_size(l), g.bit_x(i + 1), g.bit_y(j - l + 1));
+		}
+	}
+}
+
+
+static void generate_file(const char *in_file, const char *out_file)
+{
+	double doc_width, doc_height;
+	char buf[1024];
+	aruco_gen_t g;
+	std::vector<aruco_gen_t> arucos;
+
+	FILE *in = fopen(in_file, "r");
+	if (in == NULL) {
+		perror("fopen");
+		exit(1);
+	}
+	FILE *out = fopen(out_file, "w+");
+	if (out == NULL) {
+		perror("fopen");
+		exit(2);
+	}
+
+	if (fgets(buf, sizeof(buf), in) == NULL || strlen(buf) < 3) {
+		printf("error: empty input file\n");
+		exit(3);
+	}
+	if (sscanf(buf, "%lf %lf", &doc_width, &doc_height) != 2) {
+		printf("invalid document dimensions\n");
+		exit(4);
+	}
+
+	// read the file into a vector in memory
+	double min_x = 1e9, max_x = -1e9, min_y = 1e9, max_y = -1e9;
+	while (fgets(buf, sizeof(buf), in) != NULL) {
+		if (strlen(buf) < 3)
+			break;
+		if (sscanf(buf, "%lf %lf %lf %x", &g.x, &g.y, &g.size, &g.code) != 4) {
+			printf("invalid line: %s\n", buf);
+			exit(2);
+		}
+		arucos.push_back(g);
+
+		if (g.x - g.size * 0.5 < min_x)
+			min_x = g.x - g.size * 0.5;
+		if (g.y - g.size * 0.5 < min_y)
+			min_y = g.y - g.size * 0.5;
+		if (g.x + g.size * 0.5 > max_x)
+			max_x = g.x + g.size * 0.5;
+		if (g.y + g.size * 0.5 > max_y)
+			max_y = g.y + g.size * 0.5;
+	}
+
+	// output all the arucos
+	fprintf(out, "<svg viewBox=\"0 0 %g %g\" xmlns=\"http://www.w3.org/2000/svg\" shape-rendering=\"crispEdges\" width=\"%gmm\" height=\"%gmm\">",
+		doc_width, doc_height, doc_width, doc_height);
+
+	for (aruco_gen_t &g: arucos)
+		output_aruco(out, g);
+
+	fprintf(out, "</svg>");
+
+	fclose(in);
+	fclose(out);
+}
+
+
+
+int main(int argc, char *argv[])
+{
+	if (argc == 1)
+		export_database();
+	else if (argc == 3)
+		generate_file(argv[1], argv[2]);
+	else
+		printf("invalid parameters\n");
 
 	return 0;
 }

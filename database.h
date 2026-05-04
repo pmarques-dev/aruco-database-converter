@@ -3,16 +3,17 @@
 // It is subject to the license terms in the LICENSE file found on this folder
 // and at http://opencv.org/license.html.
 
-#define ARUCO_DB_ORIGINAL	0
-#define ARUCO_DB_4X4_1000	1
-#define ARUCO_DB_5X5_1000	2
-#define ARUCO_DB_6X6_1000	3
-#define ARUCO_DB_7X7_1000	4
-#define ARUCO_DB_ARUCO_MIP_36h12	5
-#define ARUCO_DB_APRILTAG_16h5	6
-#define ARUCO_DB_APRILTAG_25h9	7
-#define ARUCO_DB_APRILTAG_36h10	8
-#define ARUCO_DB_APRILTAG_36h11	9
+#define ARUCO_DB_ORIGINAL	1
+#define ARUCO_DB_4X4_1000	2
+#define ARUCO_DB_5X5_1000	3
+#define ARUCO_DB_6X6_1000	4
+#define ARUCO_DB_7X7_1000	5
+#define ARUCO_DB_ARUCO_MIP_36h12	6
+#define ARUCO_DB_APRILTAG_16h5	7
+#define ARUCO_DB_APRILTAG_25h9	8
+#define ARUCO_DB_APRILTAG_36h10	9
+#define ARUCO_DB_APRILTAG_36h11	10
+#define ARUCO_6x6_CODE32	99
 
 #if !defined(ARUCO_DB)
 
@@ -24905,6 +24906,21 @@ static unsigned char database[ARUCO_DB_SIZE][4][5] = {
 	#endif
 
 };
+
+#elif (ARUCO_DB == ARUCO_6x6_CODE32)
+
+#define ARUCO_DB_SIZE	0
+
+#define ARUCO_BITS	6
+
+static unsigned char database[0][4][4];
+
+#define ARUCO_CODE32
+
+
+#else
+
+#error ARUCO_DB is defined to an invalid value
 
 #endif
 
