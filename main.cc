@@ -52,13 +52,20 @@ static void export_db(db_t &db)
 
 	printf("static unsigned char database[ARUCO_DB_SIZE][4][%d] = {\n", db.bytes);
 
+	int last_byte_rot = ((db.bits * db.bits) % 8);
+	if (last_byte_rot)
+		last_byte_rot = 8- last_byte_rot;
+
 	for (i = 0; i < db.size; i++) {
 		printf("\t#if (ARUCO_DB_SIZE > %d)\n", i);
 		printf("\t\t{ ");
 		for (j = 0; j < 4; j++) {
 			printf("{ ");
 			for (k = 0; k < db.bytes; k++) {
-				printf("%d%c", *ptr, (k == db.bytes - 1) ? ' ' : ',');
+				if (k == db.bytes - 1)
+					printf("%d ", *ptr << last_byte_rot);
+				else
+					printf("%d,", *ptr);
 				ptr++;
 			}
 			printf("}, ");
@@ -91,21 +98,20 @@ static void export_database(void)
 
 	printf("#if !defined(ARUCO_DB)\n\n");
 	printf("#error you need to select one aruco database by defining ARUCO_DB to be one of:");
-	for (db = 0; db < 10; db++)
+	for (db = 0; db < array_count(databases); db++)
 		printf(" %s", databases[db].name);
 	printf("\n");
 
-	for (db = 0; db < 10; db++) {
+	for (db = 0; db < array_count(databases); db++) {
 		printf("\n#elif (ARUCO_DB == %s)\n\n", databases[db].name);
 		//printf("\n#elif (ARUCO_DB == %d)\n\n", db);
 		export_db(databases[db]);
 	}
 
-	printf("\n#elif (ARUCO_DB == ARUCO_6x6_CODE32)\n\n", databases[db].name);
+	printf("\n#elif (ARUCO_DB == ARUCO_6x6_CODE32)\n\n");
 
 	printf("#define ARUCO_DB_SIZE	0\n\n");
 	printf("#define ARUCO_BITS	6\n\n");
-	printf("static unsigned char database[0][4][4];\n\n");
 	printf("#define ARUCO_CODE32\n\n");
 
 	printf("\n#else\n\n"
